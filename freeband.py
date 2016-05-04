@@ -144,8 +144,13 @@ def main(argv):
 
 	# Apply sorting by album size, largest albums first
 	free_stuff = sorted(free_stuff, key=lambda x: x.size_bytes(), reverse=True)
+	len_before = len(free_stuff)
 
-	# TODO only check really big albums ( > 300MB)
+	# Filter out small albums
+	free_stuff = filter(lambda alb: alb.big(), free_stuff)
+	len_after = len(free_stuff)
+
+	print colored('Filtered out %d small albums' % (len_before - len_after), 'green')
 
 	# pygazelle is a Python API on top of Gazelle REST API (Gazelle is the engine What.CD runs on)
 	whatcdpwd = getpass.getpass('What.CD password:')

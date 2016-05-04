@@ -54,5 +54,12 @@ class Album:
 		# for unknown size, let's return some heuristic value based on album duration
 		return self.duration_seconds() * 1024 * 100
 
+	def big(self):
+		"""
+		Is the album big?
+		:return True if the size of the album is more than 300MB, false otherwise
+		"""
+		return MiB(300).bytes < self.size_bytes()
+
 	def to_str(self):
 		return ', '.join([self.album, self.artist, str(self.year), self.duration, self.size, self.url])
