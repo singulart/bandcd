@@ -51,12 +51,7 @@ class Album:
 		if 'MB' in self.size:
 			return MiB(float(self.size.replace('MB', ''))).bytes
 		# for unknown size, let's return some heuristic value based on album duration
-		return self.duration_seconds() * 1024 * 100;
+		return self.duration_seconds() * 1024 * 100
 
 	def to_str(self):
 		return ', '.join([self.album, self.artist, str(self.year), self.duration, self.size, self.url])
-
-# a1 = Album("1", "1", 2016, 'http://www.google.com', '100MB')
-# a1.add_track('1:01:38')
-# a1.add_track('3:00')
-# print(a1.to_str())
