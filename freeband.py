@@ -16,15 +16,15 @@ try:
 except ImportError:
 	from cgi import escape  # python 2.x
 
-# Select Album titles
+# Release titles
 alb_css = CSSSelector('.itemtext')
-# Select artist names
+# Artist names
 art_css = CSSSelector('.itemsubtext')
 # "name your price" text. This is an indicator of a free album
 name_your_price = CSSSelector('span.buyItemExtra')
 # Duration of all tracks
 tracks_play_time = CSSSelector('div.title > span.time')
-# Album release year. Newer albums get more attention from seedboxes
+# Release year. Newer albums get more attention from seedboxes
 get_year = CSSSelector('meta[itemprop = "datePublished"]')
 # Next navigation page
 has_next = CSSSelector('a.next')
@@ -33,7 +33,7 @@ driver = webdriver.Firefox()
 
 
 def main(argv):
-	print colored('FreeBand.py v0.4.0 (c) singulart@i.ua', 'yellow')
+	print colored('FreeBand.py v0.5.0 (c) singulart@i.ua', 'yellow')
 	print colored('Simple tool reporting which Bandcamp free albums are missing on What.CD', 'yellow')
 
 	bandcamptag = ''
