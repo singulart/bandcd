@@ -1,6 +1,7 @@
 from bitmath import GiB
 from bitmath import MiB
 
+
 class Album:
 	def __init__(self, artist, album, year, url, size):
 		self.artist = artist

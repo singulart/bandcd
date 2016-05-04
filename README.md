@@ -23,3 +23,4 @@ Written in Python and Selenium
 2. pygazelle
 3. lxml
 4. termcolor 
+5. bitmath

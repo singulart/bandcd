@@ -20,11 +20,11 @@ except ImportError:
 alb_css = CSSSelector('.itemtext')
 # Select artist names
 art_css = CSSSelector('.itemsubtext')
-# Select "name your price" text
+# "name your price" text. This is an indicator of a free album
 name_your_price = CSSSelector('span.buyItemExtra')
-# Select duration of all tracks
+# Duration of all tracks
 tracks_play_time = CSSSelector('div.title > span.time')
-# Lookup album release year. Newer albums get more attention from seedboxes
+# Album release year. Newer albums get more attention from seedboxes
 get_year = CSSSelector('meta[itemprop = "datePublished"]')
 # Next navigation page
 has_next = CSSSelector('a.next')
@@ -184,6 +184,8 @@ def get_size(url):
 		flac.click()
 		return driver.find_element_by_xpath("//span[contains(text(), 'size')]").text
 	except:
+		# Some albums allow you to navigate to download page only after you provide an email address
+		# Size of such albums cannot be retrieved
 		return 'size: unknown'
 
 if __name__ == "__main__":
