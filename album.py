@@ -1,13 +1,15 @@
 from bitmath import GiB
 from bitmath import MiB
+import json
 
 
 class Album:
-	def __init__(self, artist, album, year, url, size):
+	def __init__(self, artist, album, year, url, size, cover_art):
 		self.artist = artist
 		self.album = album
 		self.year = year
 		self.url = url
+		self.cover_art = cover_art
 		self.size = size
 		self.duration = ''
 
@@ -63,3 +65,7 @@ class Album:
 
 	def to_str(self):
 		return ', '.join([self.album, self.artist, str(self.year), self.duration, self.size, self.url])
+
+	def dump_json(self):
+		with open(self.artist + ' ' + self.album + '.json', 'w') as outfile:
+			json.dump(self.__dict__, outfile)

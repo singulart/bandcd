@@ -24,6 +24,8 @@ art_css = CSSSelector('.itemsubtext')
 name_your_price = CSSSelector('span.buyItemExtra')
 # Duration of all tracks
 tracks_play_time = CSSSelector('div.title > span.time')
+# Url of the release cover art
+cover_art = CSSSelector('a.popupImage')
 # Release year. Newer albums get more attention from seedboxes
 get_year = CSSSelector('meta[itemprop = "datePublished"]')
 # Next navigation page
@@ -33,7 +35,7 @@ driver = webdriver.Firefox()
 
 
 def main(argv):
-	print colored('FreeBand.py v0.5.0 (c) singulart@i.ua', 'yellow')
+	print colored('FreeBand.py v0.6.0 (c) singulart@i.ua', 'yellow')
 	print colored('Simple tool reporting which Bandcamp free albums are missing on What.CD', 'yellow')
 
 	bandcamptag = ''
@@ -119,8 +121,9 @@ def main(argv):
 					# Trying to retrieve the album size
 					size = get_size(details_url).replace('size: ', '', 1)
 					print size
+					cover = cover_art(details_tree)[0].get('href')
 					# Create an Album class instance
-					album = Album(artist, album, year, details_url, size)
+					album = Album(artist, album, year, details_url, size, cover)
 					play_time = tracks_play_time(details_tree)
 					for t in play_time:
 						album.add_track(t.text)
@@ -166,6 +169,7 @@ def main(argv):
 			if not albumsCallResult['results']:
 				whatcd_missing += 1
 				print colored('Album %s is missing' % (a.to_str()), 'cyan')
+				a.dump_json()
 		except KeyError:
 			print colored('Error searching for album %s. Please look up manually' % (a.to_str()), 'red')
 	print str(whatcd_missing / len(free_stuff) * 100) + '% discovered albums is missing'
