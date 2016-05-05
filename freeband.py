@@ -43,8 +43,7 @@ def main(argv):
 	try:
 		opts, args = getopt.getopt(argv,"hb:u:",["bandcamptag=","whatcduser="])
 	except getopt.GetoptError:
-		print 'freeband.py -b <bandcamp tag> -u <whatcdusername>'
-		sys.exit(2)
+		usage()
 	for opt, arg in opts:
 		if opt == '-h':
 			print 'freeband.py -b <bandcamp tag> -u <whatcdusername>'
@@ -54,13 +53,8 @@ def main(argv):
 		elif opt in ("-u", "--whatcduser"):
 			whatcdusername = arg
 
-	if bandcamptag == '':
-		print 'freeband.py -b <bandcamp tag> -u <whatcdusername>'
-		sys.exit(2)
-
-	if whatcdusername == '':
-		print 'freeband.py -b <bandcamp tag> -u <whatcdusername>'
-		sys.exit(2)
+	if bandcamptag == '' or whatcdusername == '':
+		usage()
 
 	page = 1
 	proceed = True
@@ -86,7 +80,6 @@ def main(argv):
 		art_data = [result.text for result in art_results]
 		alb_data = [result.text for result in alb_results]
 		page_data = OrderedDict(zip(alb_data, art_data))
-		print colored('Page %d has %d albums to analyse' % (page, len(page_data)), 'blue')
 
 		really_free_page_data = []
 
@@ -100,13 +93,11 @@ def main(argv):
 			get_details_url = CSSSelector('a[title="%s"]' % v1)
 			try:
 				details_url = get_details_url(tree)[0].get('href')
-				print colored("checking album %s -> %s" % (album, details_url), 'green')
 				details = requests.get(details_url)
 				details_tree = lxml.html.fromstring(details.text)
 				buyMe = name_your_price(details_tree)[0].text
-				if not 'name your price' in buyMe:
-					print colored('         album %s isn\'t free' % album, 'yellow')
-				else:
+				if 'name your price' in buyMe:
+					print colored("Album %s -> %s is FREE!" % (album, details_url), 'green')
 					# TODO sanitise album names for better What.CD search accuracy (remove EP, LP, Free Download) and stuff like that
 					year_element = get_year(details_tree)
 					year = 1970
@@ -165,8 +156,8 @@ def main(argv):
 	for a in free_stuff:
 		time.sleep(2)
 		try:
-			albumsCallResult = api.search_torrents(groupname=a.album, artistname=a.artist)  # search by album and artist
-			if not albumsCallResult['results']:
+			search_result = api.search_torrents(groupname=a.album, artistname=a.artist)  # search by album and artist
+			if not search_result['results']:
 				whatcd_missing += 1
 				print colored('Album %s is missing' % (a.to_str()), 'cyan')
 				a.dump_json()
@@ -196,6 +187,11 @@ def get_size(url):
 		# Some albums allow you to navigate to download page only after you provide an email address
 		# Size of such albums cannot be retrieved
 		return 'size: unknown'
+
+
+def usage():
+	print 'freeband.py -b <bandcamp tag> -u <whatcdusername>'
+	sys.exit(2)
 
 if __name__ == "__main__":
 	main(sys.argv[1:])

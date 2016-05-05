@@ -24,3 +24,6 @@ Written in Python and Selenium
 3. lxml
 4. termcolor 
 5. bitmath
+6. json
+7. wget
+8. requests
