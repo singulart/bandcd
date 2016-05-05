@@ -32,17 +32,15 @@ for json_file in album_data_files:
 		try:
 			format_drop_down = driver.find_element_by_id('downloadFormatMenu0')
 			format_drop_down.click()
-		except:
-			print 'Album %s cannot be downloaded: email-based links are not supported' % url
-			driver.close()
-			exit(1)
+			flac = driver.find_element_by_css_selector("li[data-value='flac']")
+			flac.click()
 
-		flac = driver.find_element_by_css_selector("li[data-value='flac']")
-		flac.click()
-
-		go = WebDriverWait(driver, 60).until(
-				EC.presence_of_element_located((By.CSS_SELECTOR, "a.downloadGo"))
+			go = WebDriverWait(driver, 60).until(
+					EC.presence_of_element_located((By.CSS_SELECTOR, "a.downloadGo"))
 			)
 
-		wget.download(go.get_attribute('href'))
+			wget.download(go.get_attribute('href'))
+		except:
+			print 'Album %s cannot be downloaded: email-based links are not supported' % url
+
 		driver.quit()
