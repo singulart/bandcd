@@ -73,4 +73,4 @@ class Album:
 		if not os.path.exists(target_dir):
 			os.mkdir(target_dir)
 		with open(target_dir + '/' + self.artist + ' ' + self.album + '.json', 'w') as outfile:
-			json.dump(self.__dict__, outfile)
+			json.dump(self.__dict__, outfile, indent=4, separators=(',', ': '))
