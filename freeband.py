@@ -1,5 +1,4 @@
 import sys, getopt
-import time
 import getpass
 import requests
 import time
@@ -85,7 +84,7 @@ def main(argv):
 
 		# For every album go to its page and
 		# 1) check if this album actually free
-		# 2) if it's free, calculate its total duration
+		# 2) if it's free, calculate its total duration, size, release year etc
 		for album, artist in page_data.iteritems():
 			# Sanitize the CSS selector
 			v1 = album.replace("/(:|\.|\[|\]|,)/g", "\\$1").replace("\"", "\\\"")
@@ -111,10 +110,11 @@ def main(argv):
 						print colored('       error getting release year', 'red')
 					# Trying to retrieve the album size
 					size = get_size(details_url).replace('size: ', '', 1)
-					print size
+					# Trying to retrieve the album cover art url
 					cover = cover_art(details_tree)[0].get('href')
-					# Create an Album class instance
+					# Creating an Album class instance
 					album = Album(artist, album, year, details_url, size, cover)
+					# Collecting tracks duration
 					play_time = tracks_play_time(details_tree)
 					for t in play_time:
 						album.add_track(t.text)
@@ -133,9 +133,6 @@ def main(argv):
 	else:
 		print colored('Found %d free albums' %len(free_stuff), 'green')
 
-	if len(free_stuff) == 0:
-		exit(0)
-
 	# Apply sorting by album size, largest albums first
 	free_stuff = sorted(free_stuff, key=lambda x: x.size_bytes(), reverse=True)
 	len_before = len(free_stuff)
@@ -144,7 +141,10 @@ def main(argv):
 	free_stuff = filter(lambda alb: alb.big(), free_stuff)
 	len_after = len(free_stuff)
 
-	print colored('Filtered out %d small albums' % (len_before - len_after), 'green')
+	if len_after == 0:
+		exit(0)
+	else:
+		print colored('Filtered out %d small albums' % (len_before - len_after), 'green')
 
 	# pygazelle is a Python API on top of Gazelle REST API (Gazelle is the engine What.CD runs on)
 	whatcdpwd = getpass.getpass('What.CD password:')
