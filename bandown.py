@@ -8,17 +8,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 print 'Bandcamp album downloader'
-os.chdir(tempfile.gettempdir() + '/freeband.py')
-album_data_files = os.listdir(os.curdir)
-for json_file in album_data_files:
+album_data_files = os.listdir(tempfile.gettempdir() + '/freeband.py')
+driver = webdriver.Firefox()
+jsons = (f for f in album_data_files if f.endswith('.json'))
+for json_file in jsons:
 	with open(json_file, 'r') as infile:
 		json_data = infile.read()
 		album = json.loads(json_data)
 
 		url = album['url']
 
-		print 'getting album %s' % url
-		driver = webdriver.Firefox()
+		print '\nGetting album %s' % url
 		driver.get(url)
 		buy_now = driver.find_element_by_css_selector('h4 > button.download-link')
 		buy_now.click()
@@ -43,4 +43,5 @@ for json_file in album_data_files:
 		except:
 			print 'Album %s cannot be downloaded: email-based links are not supported' % url
 
-		driver.quit()
+driver.quit()
+print 'Done'
