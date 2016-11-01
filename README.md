@@ -10,14 +10,14 @@ Main features:
 Written in Python and Selenium
 
 
-# Files
+### Files
 
 1. freeband.py - main analysing tool
 2. bandown.py - selenium-based album downloader
 3. tracklist.py - generates album track list
 4. album.py - data model for Bandcamp album
 
-# External dependencies
+### External dependencies
 
 1. Selenium 
 2. pygazelle
@@ -29,7 +29,7 @@ Written in Python and Selenium
 8. requests
 
 
-# Recommended dependency installation
+### Recommended dependency installation
 
 cd into git project
 
