@@ -1,4 +1,5 @@
 import getopt
+import json
 import sys
 import time
 from collections import OrderedDict
@@ -11,15 +12,9 @@ from termcolor import colored
 
 from album import Album
 
-try:
-	from html import escape  # python 3.x
-except ImportError:
-	from cgi import escape  # python 2.x
+# Json Page Model
+pagedata = CSSSelector('#pagedata')
 
-# Release titles
-alb_css = CSSSelector('.itemtext')
-# Artist names
-art_css = CSSSelector('.itemsubtext')
 # "name your price" text. This is an indicator of a free album
 name_your_price = CSSSelector('span.buyItemExtra')
 # Duration of all tracks
@@ -32,6 +27,16 @@ get_year = CSSSelector('meta[itemprop = "datePublished"]')
 has_next = CSSSelector('a.next')
 
 driver = webdriver.Firefox()
+
+
+def search_list_of_dicts(leezt, attr, value):
+	"""
+	Loops through a list of dictionaries and returns matching attribute value pair
+	You can also pass it slug, silvermoon or type, pve
+	returns a list containing all matching dictionaries
+	"""
+	matches = [record for record in leezt if attr in record and record[attr] == value]
+	return matches
 
 
 def main(argv):
@@ -63,41 +68,40 @@ def main(argv):
 	print(colored('Looking for free albums on BandCamp using tag %s...' % bandcamptag, 'green'))
 
 	while proceed:
-		r = requests.get('https://bandcamp.com/tag/%s?page=%dsort_asc=0&sort_field=date' % (bandcamptag, page))
+		r = requests.get('https://bandcamp.com/tag/%s?tab=all_releases&s=date' % bandcamptag)
 
-		# build the DOM Tree
-		tree = lxml.html.fromstring(r.text)
-
-		# Apply selectors to the DOM tree.
-		art_results = art_css(tree)
-		alb_results = alb_css(tree)
-
-		if len(art_results) != len(alb_results):
-			print(colored('Albums don\'t match artists', 'red'))
+		tree = lxml.html.fromstring(r.text)  # build the DOM tree
+		page_data_div = pagedata(tree)  # apply CSS selector to find div with json page model (data-blob)
+		data_blob = {}  # this is the json page model
+		if not page_data_div or len(page_data_div) == 0:
+			print('Json page model not found. Check the html structure and fix the CSS selector')
 			exit(1)
+		else:
+			data_blob = json.loads(page_data_div[0].xpath('@data-blob')[0])
+		
+		new_releases_tab = search_list_of_dicts(data_blob['hub']['tabs'][0]['collections'], 'name', 'new_releases')[0]['items']
 
 		# get the text out of all the results
-		art_data = [result.text for result in art_results]
-		alb_data = [result.text for result in alb_results]
-		page_data = OrderedDict(zip(alb_data, art_data))
+		url_data = [nr['tralbum_url'] for nr in new_releases_tab]
+		alb_data = [nr['title'] for nr in new_releases_tab]
+		artist_data = [nr['artist'] for nr in new_releases_tab]
+		page_data = zip(alb_data, url_data, artist_data)
 
 		really_free_page_data = []
 
 		# For every album go to its page and
 		# 1) check if this album actually free
 		# 2) if it's free, calculate its total duration, size, release year etc
-		for album, artist in page_data.items():
+		for album, url, artist in page_data:
 			# Sanitize the CSS selector
 			v1 = album.replace("/(:|\.|\[|\]|,)/g", "\\$1").replace("\"", "\\\"")
 			# Select a link to details page
-			get_details_url = CSSSelector('a[title="%s"]' % v1)
 			try:
-				details_url = get_details_url(tree)[0].get('href')
-				details = requests.get(details_url)
+				details = requests.get(url)
 				details_tree = lxml.html.fromstring(details.text)
 				buyMe = name_your_price(details_tree)[0].text
 				if 'name your price' in buyMe:
-					print(colored("Album %s -> %s is FREE!" % (album, details_url), 'green'))
+					print(colored("Album %s -> %s is FREE!" % (album, url), 'green'))
 					# TODO sanitise album names for better What.CD search accuracy (remove EP, LP, Free Download) and stuff like that
 					year_element = get_year(details_tree)
 					year = 1970
@@ -109,12 +113,10 @@ def main(argv):
 							print(colored('       no release year found', 'yellow'))
 					except KeyError:
 						print(colored('       error getting release year', 'red'))
-					# Trying to retrieve the album size
-					size = get_size(details_url).replace('size: ', '', 1)
 					# Trying to retrieve the album cover art url
 					cover = cover_art(details_tree)[0].get('href')
 					# Creating an Album class instance
-					album = Album(artist, album, year, details_url, size, cover)
+					album = Album(artist, album, year, url, '0MB', cover)
 					# Collecting tracks duration
 					play_time = tracks_play_time(details_tree)
 					for t in play_time:
@@ -157,6 +159,10 @@ def get_size(url):
 		price_field = driver.find_element_by_css_selector("input[id='userPrice']")
 		price_field.send_keys('0')
 
+		# TODO FIX THIS SELECTOR
+		dwnld_link = driver.find_element_by_css_selector("TralbumDownload.showButtonsSection(event); return false")
+		dwnld_link.click()
+
 		dnow = driver.find_element_by_css_selector("button[onclick='TralbumDownload.checkout(); return false']")
 		dnow.click()
 
@@ -165,7 +171,7 @@ def get_size(url):
 		flac = driver.find_element_by_css_selector("li[data-value='flac']")
 		flac.click()
 		return driver.find_element_by_xpath("//span[contains(text(), 'size')]").text
-	except IOError:
+	except:
 		# Some albums allow you to navigate to download page only after you provide an email address
 		# Size of such albums cannot be retrieved
 		return 'size: unknown'
