@@ -6,10 +6,10 @@ import time
 import lxml.html
 import requests
 from lxml.cssselect import CSSSelector
-from selenium import webdriver
 from termcolor import colored
 
 from album import Album
+from bandown import navigate_to_download_screen
 
 pagedata = CSSSelector('#pagedata')  # Json Page Model
 name_your_price = CSSSelector('span.buyItemExtra')  # "name your price" text. This is an indicator of a free album
@@ -17,8 +17,6 @@ tracks_play_time = CSSSelector('div.title > span.time')  # Duration of all track
 cover_art = CSSSelector('a.popupImage')  # Url of the release cover art
 get_year = CSSSelector('meta[itemprop = "datePublished"]')  # Release year
 has_next = CSSSelector('a.next')  # Next navigation page
-
-driver = webdriver.Firefox()
 
 
 def main(argv):
@@ -85,8 +83,10 @@ def main(argv):
                             print(colored('       no release year found', 'yellow'))
                     except KeyError:
                         print(colored('       error getting release year', 'red'))
+                    # Trying to retrieve the album size
+                    size = get_size(url).replace('size: ', '', 1)
                     cover = cover_art(details_tree)[0].get('href')  # Trying to retrieve the album cover art url
-                    album = Album(artist, album, year, url, '0MB', cover)  # Creating an Album class instance
+                    album = Album(artist, album, year, url, size, cover)  # Creating an Album class instance
                     play_time = tracks_play_time(details_tree)  # Collecting tracks duration
                     for t in play_time:
                         album.add_track(t.text)
@@ -107,7 +107,7 @@ def main(argv):
         print(colored('Found %d free albums' % len(free_stuff), 'green'))
 
     # Apply sorting by album size, largest albums first
-    # free_stuff = sorted(free_stuff, key=lambda x: x.size_bytes(), reverse=True)
+    free_stuff = sorted(free_stuff, key=lambda x: x.size_bytes(), reverse=True)
 
     # Filter out small albums
     # free_stuff = list(filter(lambda alb: alb.big(), free_stuff))
@@ -120,23 +120,13 @@ def main(argv):
 
 
 def get_size(url):
+    """
+    Retrieves the information about the download size. Back then, when the tool was used in conjunction with What.cd,
+    this data was very useful (larger uploads yield better ratio), but at the moment it's almost useless IMO.
+    Anyways, I decided to leave it, because this flow is kinda cool
+    """
     try:
-        driver.get(url)
-        buy_now = driver.find_element_by_css_selector('h4 > button.download-link')
-        buy_now.click()
-
-        price_field = driver.find_element_by_css_selector("input[id='userPrice']")
-        price_field.send_keys('0')
-
-        # TODO FIX THIS SELECTOR
-        dwnld_link = driver.find_element_by_css_selector("TralbumDownload.showButtonsSection(event); return false")
-        dwnld_link.click()
-
-        dnow = driver.find_element_by_css_selector("button[onclick='TralbumDownload.checkout(); return false']")
-        dnow.click()
-
-        format_drop_down = driver.find_element_by_id('downloadFormatMenu0')
-        format_drop_down.click()
+        driver = navigate_to_download_screen(url, initiate_download=False)
         flac = driver.find_element_by_css_selector("li[data-value='flac']")
         flac.click()
         return driver.find_element_by_xpath("//span[contains(text(), 'size')]").text
