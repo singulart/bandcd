@@ -71,17 +71,14 @@ def main(argv):
 														'name', 'new_releases')[0]['items']
 
 		# get the text out of all the results
-		(alb_data, url_data, artist_data) = [
-			(nr['title'], nr['tralbum_url'], nr['artist']) for nr in new_releases_tab
-		]
-		page_data = zip(alb_data, url_data, artist_data)
+		tuples = [(nr['title'], nr['tralbum_url'], nr['artist']) for nr in new_releases_tab]
 
 		really_free_page_data = []
 
 		# For every album go to its page and
 		# 1) check if this album actually free
 		# 2) if it's free, calculate its total duration, size, release year etc
-		for album, url, artist in page_data:
+		for (album, url, artist) in tuples:
 			try:
 				details = requests.get(url)
 				details_tree = lxml.html.fromstring(details.text)
@@ -160,7 +157,7 @@ def get_size(url):
 
 
 def usage():
-	print('freeband.py -b <bandcamp tag> -u <whatcdusername>')
+	print('freeband.py -b <bandcamp tag>')
 	sys.exit(2)
 
 
