@@ -122,6 +122,7 @@ def main(argv):
 					for t in play_time:
 						album.add_track(t.text)
 					really_free_page_data.append(album)
+					album.dump_json()
 			except IndexError:
 				print(colored('Problem getting url for album %s' % album, 'red'))
 

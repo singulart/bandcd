@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import time
 
 import wget
 from selenium import webdriver
@@ -11,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 print('Bandcamp album downloader')
 album_data_files = os.listdir(tempfile.gettempdir() + '/freeband.py')
 driver = webdriver.Firefox()
-jsons = (f for f in album_data_files if f.endswith('.json'))
+jsons = [tempfile.gettempdir() + '/freeband.py/' + f for f in album_data_files if f.endswith('.json')]
 for json_file in jsons:
 	with open(json_file, 'r') as infile:
 		json_data = infile.read()
@@ -26,18 +27,19 @@ for json_file in jsons:
 
 		price_field = driver.find_element_by_css_selector("input[id='userPrice']")
 		price_field.send_keys('0')
-
-		dnow = driver.find_element_by_css_selector("button[onclick='TralbumDownload.checkout(); return false']")
+		
+		time.sleep(1)
+		dwnld_link = driver.find_element_by_css_selector("a[onclick='TralbumDownload.showButtonsSection(event); return false']")
+		dwnld_link.click()
+		
+		time.sleep(1)
+		dnow = driver.find_elements_by_css_selector("button[onclick='TralbumDownload.checkout(); return false']")[1]
 		dnow.click()
 
 		try:
-			format_drop_down = driver.find_element_by_id('downloadFormatMenu0')
-			format_drop_down.click()
-			flac = driver.find_element_by_css_selector("li[data-value='flac']")
-			flac.click()
 
-			go = WebDriverWait(driver, 60).until(
-					EC.presence_of_element_located((By.CSS_SELECTOR, "a.downloadGo"))
+			go = WebDriverWait(driver, 8).until(
+					EC.visibility_of_element_located((By.CSS_SELECTOR, ".item-button:last-of-type"))
 			)
 
 			# Downloads a zip file to current directory
