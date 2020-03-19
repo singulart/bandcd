@@ -21,16 +21,6 @@ has_next = CSSSelector('a.next')  # Next navigation page
 driver = webdriver.Firefox()
 
 
-def search_list_of_dicts(leezt, attr, value):
-    """
-    Loops through a list of dictionaries and returns matching attribute value pair
-    You can also pass it slug, silvermoon or type, pve
-    returns a list containing all matching dictionaries
-    """
-    matches = [record for record in leezt if attr in record and record[attr] == value]
-    return matches
-
-
 def main(argv):
     print(colored('Bandcamp automation tools v1.0.0 (c) singulart@protonmail.com', 'yellow'))
 
@@ -159,6 +149,16 @@ def get_size(url):
 def usage():
     print('freeband.py -b <bandcamp tag>')
     sys.exit(2)
+
+
+def search_list_of_dicts(leezt, attr, value):
+    """
+    Loops through a list of dictionaries and returns matching attribute value pair
+    You can also pass it slug, silvermoon or type, pve
+    returns a list containing all matching dictionaries
+    """
+    matches = [record for record in leezt if attr in record and record[attr] == value]
+    return matches
 
 
 if __name__ == "__main__":
