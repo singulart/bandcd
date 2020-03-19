@@ -9,6 +9,27 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+driver = webdriver.Firefox()
+
+
+def fetch_releases():
+    print('Bandcamp album downloader')
+    album_data_files = os.listdir(tempfile.gettempdir() + '/freeband.py')
+    jsons = [tempfile.gettempdir() + '/freeband.py/' + f for f in album_data_files if f.endswith('.json')]
+
+    for json_file in jsons:
+        with open(json_file, 'r') as infile:
+            json_data = infile.read()
+            album = json.loads(json_data)
+            
+            url = album['url']
+            
+            print('\nGetting album %s' % url)
+            navigate_to_download_screen(url)
+    
+    driver.quit()
+    print('Done')
+
 
 def navigate_to_download_screen(album_url, initiate_download=True):
     try:
@@ -29,32 +50,19 @@ def navigate_to_download_screen(album_url, initiate_download=True):
         time.sleep(1)
         dnow = driver.find_elements_by_css_selector("button[onclick='TralbumDownload.checkout(); return false']")[1]
         dnow.click()
-        
-        go = WebDriverWait(driver, 8).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, ".item-button:last-of-type"))
-        )
+
         if initiate_download:
+            go = WebDriverWait(driver, 8).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, ".item-button:last-of-type"))
+            )
             # Downloads a zip file to current directory
             wget.download(go.get_attribute('href'))
+        else:
+            time.sleep(2)
     except:
-        print('Album %s cannot be downloaded: email-based links are not supported' % url)
+        print('Album %s cannot be downloaded: email-based links are not supported' % album_url)
     return driver
 
 
-print('Bandcamp album downloader')
-album_data_files = os.listdir(tempfile.gettempdir() + '/freeband.py')
-driver = webdriver.Firefox()
-jsons = [tempfile.gettempdir() + '/freeband.py/' + f for f in album_data_files if f.endswith('.json')]
-
-for json_file in jsons:
-    with open(json_file, 'r') as infile:
-        json_data = infile.read()
-        album = json.loads(json_data)
-
-        url = album['url']
-
-        print('\nGetting album %s' % url)
-        navigate_to_download_screen(url)
-
-driver.quit()
-print('Done')
+if __name__ == "__main__":
+    fetch_releases()

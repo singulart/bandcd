@@ -119,7 +119,7 @@ def main(argv):
     #   print(colored('Filtered out %d small albums' % (len_before - len_after), 'green'))
 
 
-def get_size(url):
+def get_size(url, audio_format='flac'):
     """
     Retrieves the information about the download size. Back then, when the tool was used in conjunction with What.cd,
     this data was very useful (larger uploads yield better ratio), but at the moment it's almost useless IMO.
@@ -127,9 +127,16 @@ def get_size(url):
     """
     try:
         driver = navigate_to_download_screen(url, initiate_download=False)
-        flac = driver.find_element_by_css_selector("li[data-value='flac']")
-        flac.click()
-        return driver.find_element_by_xpath("//span[contains(text(), 'size')]").text
+        dom = lxml.html.fromstring(driver.page_source)  # build the DOM tree
+        page_model = pagedata(dom)
+        data_blob = json.loads(page_model[0].xpath('@data-blob')[0])
+        downloads = data_blob['download_items'][0]['downloads']
+        if audio_format in downloads.keys():
+            return downloads[audio_format]['size_mb']
+        else:
+            print('Audio format %s is not available. This release can be downloaded as %s' %
+                  (audio_format, ",".join(downloads.keys())))
+            return 'size: unknown'
     except:
         # Some albums allow you to navigate to download page only after you provide an email address
         # Size of such albums cannot be retrieved
