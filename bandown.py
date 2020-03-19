@@ -1,13 +1,14 @@
-import sys, os
 import json
+import os
 import tempfile
+
 import wget
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
-print 'Bandcamp album downloader'
+print('Bandcamp album downloader')
 album_data_files = os.listdir(tempfile.gettempdir() + '/freeband.py')
 driver = webdriver.Firefox()
 jsons = (f for f in album_data_files if f.endswith('.json'))
@@ -18,7 +19,7 @@ for json_file in jsons:
 
 		url = album['url']
 
-		print '\nGetting album %s' % url
+		print('\nGetting album %s' % url)
 		driver.get(url)
 		buy_now = driver.find_element_by_css_selector('h4 > button.download-link')
 		buy_now.click()
@@ -39,9 +40,10 @@ for json_file in jsons:
 					EC.presence_of_element_located((By.CSS_SELECTOR, "a.downloadGo"))
 			)
 
+			# Downloads a zip file to current directory
 			wget.download(go.get_attribute('href'))
-		except:
-			print 'Album %s cannot be downloaded: email-based links are not supported' % url
+		except IOError:
+			print('Album %s cannot be downloaded: email-based links are not supported' % url)
 
 driver.quit()
-print 'Done'
+print('Done')

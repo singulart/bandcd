@@ -1,14 +1,15 @@
-import sys, getopt
-import getpass
-import requests
+import getopt
+import sys
 import time
-import lxml.html
-from selenium import webdriver
-from album import Album
-from lxml.cssselect import CSSSelector
 from collections import OrderedDict
-from pygazelle.api import GazelleAPI
+
+import lxml.html
+import requests
+from lxml.cssselect import CSSSelector
+from selenium import webdriver
 from termcolor import colored
+
+from album import Album
 
 try:
 	from html import escape  # python 3.x
@@ -34,18 +35,18 @@ driver = webdriver.Firefox()
 
 
 def main(argv):
-	print colored('FreeBand.py v0.6.0 (c) singulart@i.ua', 'yellow')
-	print colored('Simple tool reporting which Bandcamp free albums are missing on What.CD', 'yellow')
+	print(colored('FreeBand.py v0.6.0 (c) singulart@protonmail.com', 'yellow'))
+	print(colored('Simple tool reporting which Bandcamp free albums are missing on What.CD', 'yellow'))
 
 	bandcamptag = ''
 	whatcdusername = ''
 	try:
-		opts, args = getopt.getopt(argv,"hb:u:",["bandcamptag=","whatcduser="])
+		opts, args = getopt.getopt(argv, "hb:u:", ["bandcamptag=", "whatcduser="])
 	except getopt.GetoptError:
 		usage()
 	for opt, arg in opts:
 		if opt == '-h':
-			print 'freeband.py -b <bandcamp tag> -u <whatcdusername>'
+			print('freeband.py -b <bandcamp tag> -u <whatcdusername>')
 			sys.exit()
 		elif opt in ("-b", "--bandcamptag"):
 			bandcamptag = arg
@@ -59,7 +60,7 @@ def main(argv):
 	proceed = True
 	free_stuff = []
 
-	print colored('Looking for free albums on BandCamp using tag %s...' % bandcamptag, 'green')
+	print(colored('Looking for free albums on BandCamp using tag %s...' % bandcamptag, 'green'))
 
 	while proceed:
 		r = requests.get('https://bandcamp.com/tag/%s?page=%dsort_asc=0&sort_field=date' % (bandcamptag, page))
@@ -72,7 +73,7 @@ def main(argv):
 		alb_results = alb_css(tree)
 
 		if len(art_results) != len(alb_results):
-			print colored('Albums don\'t match artists', 'red')
+			print(colored('Albums don\'t match artists', 'red'))
 			exit(1)
 
 		# get the text out of all the results
@@ -85,7 +86,7 @@ def main(argv):
 		# For every album go to its page and
 		# 1) check if this album actually free
 		# 2) if it's free, calculate its total duration, size, release year etc
-		for album, artist in page_data.iteritems():
+		for album, artist in page_data.items():
 			# Sanitize the CSS selector
 			v1 = album.replace("/(:|\.|\[|\]|,)/g", "\\$1").replace("\"", "\\\"")
 			# Select a link to details page
@@ -96,7 +97,7 @@ def main(argv):
 				details_tree = lxml.html.fromstring(details.text)
 				buyMe = name_your_price(details_tree)[0].text
 				if 'name your price' in buyMe:
-					print colored("Album %s -> %s is FREE!" % (album, details_url), 'green')
+					print(colored("Album %s -> %s is FREE!" % (album, details_url), 'green'))
 					# TODO sanitise album names for better What.CD search accuracy (remove EP, LP, Free Download) and stuff like that
 					year_element = get_year(details_tree)
 					year = 1970
@@ -105,9 +106,9 @@ def main(argv):
 							year_s = year_element[0].attrib['content']
 							year = time.strptime(year_s, '%Y%m%d').tm_year
 						else:
-							print colored('       no release year found', 'yellow')
+							print(colored('       no release year found', 'yellow'))
 					except KeyError:
-						print colored('       error getting release year', 'red')
+						print(colored('       error getting release year', 'red'))
 					# Trying to retrieve the album size
 					size = get_size(details_url).replace('size: ', '', 1)
 					# Trying to retrieve the album cover art url
@@ -120,50 +121,31 @@ def main(argv):
 						album.add_track(t.text)
 					really_free_page_data.append(album)
 			except IndexError:
-				print colored('Problem getting url for album %s' % album, 'red')
+				print(colored('Problem getting url for album %s' % album, 'red'))
 
 		free_stuff.extend(really_free_page_data)
 
 		nextel = has_next(tree)
 		if nextel:
-			print colored('Discovered %d albums so far' % (len(free_stuff)), 'green')
+			print(colored('Discovered %d albums so far' % (len(free_stuff)), 'green'))
 			page += 1
 		else:
 			proceed = False
 	else:
-		print colored('Found %d free albums' %len(free_stuff), 'green')
+		print(colored('Found %d free albums' % len(free_stuff), 'green'))
 
 	# Apply sorting by album size, largest albums first
 	free_stuff = sorted(free_stuff, key=lambda x: x.size_bytes(), reverse=True)
 	len_before = len(free_stuff)
 
 	# Filter out small albums
-	free_stuff = filter(lambda alb: alb.big(), free_stuff)
+	free_stuff = list(filter(lambda alb: alb.big(), free_stuff))
 	len_after = len(free_stuff)
 
 	if len_after == 0:
 		exit(0)
 	else:
-		print colored('Filtered out %d small albums' % (len_before - len_after), 'green')
-
-	# pygazelle is a Python API on top of Gazelle REST API (Gazelle is the engine What.CD runs on)
-	whatcdpwd = getpass.getpass('What.CD password:')
-	api = GazelleAPI(whatcdusername, whatcdpwd)
-	api.request('announcements')  # just to log in
-	print colored('Logged in to What.CD: %s' % (api.logged_in()), 'yellow')
-
-	whatcd_missing = 0.0
-	for a in free_stuff:
-		time.sleep(2)
-		try:
-			search_result = api.search_torrents(groupname=a.album, artistname=a.artist)  # search by album and artist
-			if not search_result['results']:
-				whatcd_missing += 1
-				print colored('Album %s is missing' % (a.to_str()), 'cyan')
-				a.dump_json()
-		except KeyError:
-			print colored('Error searching for album %s. Please look up manually' % (a.to_str()), 'red')
-	print str(whatcd_missing / len(free_stuff) * 100) + '% discovered albums is missing'
+		print(colored('Filtered out %d small albums' % (len_before - len_after), 'green'))
 
 
 def get_size(url):
@@ -183,15 +165,16 @@ def get_size(url):
 		flac = driver.find_element_by_css_selector("li[data-value='flac']")
 		flac.click()
 		return driver.find_element_by_xpath("//span[contains(text(), 'size')]").text
-	except:
+	except IOError:
 		# Some albums allow you to navigate to download page only after you provide an email address
 		# Size of such albums cannot be retrieved
 		return 'size: unknown'
 
 
 def usage():
-	print 'freeband.py -b <bandcamp tag> -u <whatcdusername>'
+	print('freeband.py -b <bandcamp tag> -u <whatcdusername>')
 	sys.exit(2)
+
 
 if __name__ == "__main__":
 	main(sys.argv[1:])

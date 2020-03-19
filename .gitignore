@@ -3,3 +3,4 @@ BandCamp.iml
 .DS_Store
 album.pyc
 selenium-server-standalone-2.53.0.jar
+/.venv/
