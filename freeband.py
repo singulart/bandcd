@@ -2,7 +2,6 @@ import getopt
 import json
 import sys
 import time
-from collections import OrderedDict
 
 import lxml.html
 import requests
@@ -12,19 +11,12 @@ from termcolor import colored
 
 from album import Album
 
-# Json Page Model
-pagedata = CSSSelector('#pagedata')
-
-# "name your price" text. This is an indicator of a free album
-name_your_price = CSSSelector('span.buyItemExtra')
-# Duration of all tracks
-tracks_play_time = CSSSelector('div.title > span.time')
-# Url of the release cover art
-cover_art = CSSSelector('a.popupImage')
-# Release year. Newer albums get more attention from seedboxes
-get_year = CSSSelector('meta[itemprop = "datePublished"]')
-# Next navigation page
-has_next = CSSSelector('a.next')
+pagedata = CSSSelector('#pagedata')  # Json Page Model
+name_your_price = CSSSelector('span.buyItemExtra')  # "name your price" text. This is an indicator of a free album
+tracks_play_time = CSSSelector('div.title > span.time')  # Duration of all tracks
+cover_art = CSSSelector('a.popupImage')  # Url of the release cover art
+get_year = CSSSelector('meta[itemprop = "datePublished"]')  # Release year
+has_next = CSSSelector('a.next')  # Next navigation page
 
 driver = webdriver.Firefox()
 
@@ -40,25 +32,21 @@ def search_list_of_dicts(leezt, attr, value):
 
 
 def main(argv):
-	print(colored('FreeBand.py v0.6.0 (c) singulart@protonmail.com', 'yellow'))
-	print(colored('Simple tool reporting which Bandcamp free albums are missing on What.CD', 'yellow'))
+	print(colored('Bandcamp automation tools v1.0.0 (c) singulart@protonmail.com', 'yellow'))
 
 	bandcamptag = ''
-	whatcdusername = ''
 	try:
-		opts, args = getopt.getopt(argv, "hb:u:", ["bandcamptag=", "whatcduser="])
+		opts, args = getopt.getopt(argv, "hb:", ["bandcamptag="])
 	except getopt.GetoptError:
 		usage()
 	for opt, arg in opts:
 		if opt == '-h':
-			print('freeband.py -b <bandcamp tag> -u <whatcdusername>')
+			print('freeband.py -b <bandcamp tag>')
 			sys.exit()
 		elif opt in ("-b", "--bandcamptag"):
 			bandcamptag = arg
-		elif opt in ("-u", "--whatcduser"):
-			whatcdusername = arg
 
-	if bandcamptag == '' or whatcdusername == '':
+	if bandcamptag == '':
 		usage()
 
 	page = 1
@@ -79,12 +67,13 @@ def main(argv):
 		else:
 			data_blob = json.loads(page_data_div[0].xpath('@data-blob')[0])
 		
-		new_releases_tab = search_list_of_dicts(data_blob['hub']['tabs'][0]['collections'], 'name', 'new_releases')[0]['items']
+		new_releases_tab = search_list_of_dicts(data_blob['hub']['tabs'][0]['collections'],
+														'name', 'new_releases')[0]['items']
 
 		# get the text out of all the results
-		url_data = [nr['tralbum_url'] for nr in new_releases_tab]
-		alb_data = [nr['title'] for nr in new_releases_tab]
-		artist_data = [nr['artist'] for nr in new_releases_tab]
+		(alb_data, url_data, artist_data) = [
+			(nr['title'], nr['tralbum_url'], nr['artist']) for nr in new_releases_tab
+		]
 		page_data = zip(alb_data, url_data, artist_data)
 
 		really_free_page_data = []
@@ -93,16 +82,12 @@ def main(argv):
 		# 1) check if this album actually free
 		# 2) if it's free, calculate its total duration, size, release year etc
 		for album, url, artist in page_data:
-			# Sanitize the CSS selector
-			v1 = album.replace("/(:|\.|\[|\]|,)/g", "\\$1").replace("\"", "\\\"")
-			# Select a link to details page
 			try:
 				details = requests.get(url)
 				details_tree = lxml.html.fromstring(details.text)
 				buyMe = name_your_price(details_tree)[0].text
 				if 'name your price' in buyMe:
 					print(colored("Album %s -> %s is FREE!" % (album, url), 'green'))
-					# TODO sanitise album names for better What.CD search accuracy (remove EP, LP, Free Download) and stuff like that
 					year_element = get_year(details_tree)
 					year = 1970
 					try:
@@ -113,18 +98,15 @@ def main(argv):
 							print(colored('       no release year found', 'yellow'))
 					except KeyError:
 						print(colored('       error getting release year', 'red'))
-					# Trying to retrieve the album cover art url
-					cover = cover_art(details_tree)[0].get('href')
-					# Creating an Album class instance
-					album = Album(artist, album, year, url, '0MB', cover)
-					# Collecting tracks duration
-					play_time = tracks_play_time(details_tree)
+					cover = cover_art(details_tree)[0].get('href')  # Trying to retrieve the album cover art url
+					album = Album(artist, album, year, url, '0MB', cover)  # Creating an Album class instance
+					play_time = tracks_play_time(details_tree)  # Collecting tracks duration
 					for t in play_time:
 						album.add_track(t.text)
 					really_free_page_data.append(album)
 					album.dump_json()
 			except IndexError:
-				print(colored('Problem getting url for album %s' % album, 'red'))
+				print(colored('Problem processing album %s' % album, 'red'))
 
 		free_stuff.extend(really_free_page_data)
 
@@ -138,17 +120,16 @@ def main(argv):
 		print(colored('Found %d free albums' % len(free_stuff), 'green'))
 
 	# Apply sorting by album size, largest albums first
-	free_stuff = sorted(free_stuff, key=lambda x: x.size_bytes(), reverse=True)
-	len_before = len(free_stuff)
+	# free_stuff = sorted(free_stuff, key=lambda x: x.size_bytes(), reverse=True)
 
 	# Filter out small albums
-	free_stuff = list(filter(lambda alb: alb.big(), free_stuff))
-	len_after = len(free_stuff)
+	# free_stuff = list(filter(lambda alb: alb.big(), free_stuff))
+	# len_after = len(free_stuff)
 
-	if len_after == 0:
-		exit(0)
-	else:
-		print(colored('Filtered out %d small albums' % (len_before - len_after), 'green'))
+	# if len_after == 0:
+	# 	exit(0)
+	# else:
+	# 	print(colored('Filtered out %d small albums' % (len_before - len_after), 'green'))
 
 
 def get_size(url):
