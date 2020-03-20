@@ -38,7 +38,6 @@ def main(sysv):
                     release['band_id'],
                     release['genre_id']
                 )
-                # storage.save(album)
                 to_save_bulk.append(album)
                 if len(to_save_bulk) == 50:
                     storage.save_all(to_save_bulk)
