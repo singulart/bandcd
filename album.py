@@ -6,13 +6,39 @@ import os
 
 
 class Album:
-    def __init__(self, artist, album, year, url, size, cover_art):
+    def __init__(self,
+                 artist,
+                 album,
+                 url,
+                 band_url='',
+                 slug_text='',
+                 num_comments=0,
+                 tralbum_id=0,
+                 art_id=0,
+                 genre='',
+                 band_id=0,
+                 genre_id=0,
+                 year=1970,
+                 size='0MB',
+                 cover_art=''
+                 ):
+        # Bandcamp Hub API fields
         self.artist = artist
-        self.album = album
-        self.year = year
-        self.url = url
+        self.title = album
+        self.tralbum_url = url
+        self.band_url = band_url
+        self.slug_text = slug_text
+        self.num_comments = num_comments
+        self.tralbum_id = tralbum_id
+        self.art_id = art_id  # cover art?
+        self.genre = genre
+        self.genre_id = genre_id
+        self.band_id = band_id
+        
+        # Custom properties
         self.cover_art = cover_art
         self.size = size
+        self.year = year
         self.duration = ''
 
     def add_track(self, track):

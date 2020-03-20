@@ -6,6 +6,7 @@ import time
 import wget
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -62,6 +63,11 @@ def navigate_to_download_screen(album_url, initiate_download=True):
     except:
         print('Album %s cannot be downloaded: email-based links are not supported' % album_url)
     return driver
+
+
+def switch_to_tab():
+    driver.find_element_by_css_selector(By.CSS_SELECTOR("body")).sendKeys(Keys.CONTROL + "\t")
+    driver.switch_to.default_content()
 
 
 if __name__ == "__main__":
