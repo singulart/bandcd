@@ -7,9 +7,10 @@ Main features:
 2. bandown.py - Downloads free albums. Requires Selenium driver
 
 ### Usage
->		python freeband.py -b indie
+>		python freeband.py --tag jazz
 
 ### Other files/scripts
 
-3. tracklist.py - generates album track list
-4. album.py - data model for Bandcamp album
+1. tracklist.py - generates album track list
+2. config.py - command line config options listed here
+2. album.py - data model for Bandcamp album

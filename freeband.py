@@ -1,4 +1,3 @@
-import getopt
 import json
 import sys
 import time
