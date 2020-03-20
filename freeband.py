@@ -10,6 +10,7 @@ from termcolor import colored
 
 from album import Album
 from bandown import navigate_to_download_screen
+from config import get_arguments
 
 pagedata = CSSSelector('#pagedata')  # Json Page Model
 name_your_price = CSSSelector('span.buyItemExtra')  # "name your price" text. This is an indicator of a free album
@@ -20,22 +21,11 @@ has_next = CSSSelector('a.next')  # Next navigation page
 
 
 def main(argv):
-    print(colored('Bandcamp automation tools v1.0.0 (c) singulart@protonmail.com', 'yellow'))
+    print(colored('Bandcamp automation tools v1.1.0 (c) singulart@protonmail.com', 'yellow'))
 
-    bandcamptag = ''
-    try:
-        opts, args = getopt.getopt(argv, "hb:", ["bandcamptag="])
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
-            print('freeband.py -b <bandcamp tag>')
-            sys.exit()
-        elif opt in ("-b", "--bandcamptag"):
-            bandcamptag = arg
-
-    if bandcamptag == '':
-        usage()
+    parser = get_arguments()
+    opt = parser.parse_args()
+    bandcamptag = opt.tag
 
     page = 1
     proceed = True
@@ -83,8 +73,7 @@ def main(argv):
                             print(colored('       no release year found', 'yellow'))
                     except KeyError:
                         print(colored('       error getting release year', 'red'))
-                    # Trying to retrieve the album size
-                    size = get_size(url).replace('size: ', '', 1)
+                    size = get_size(url, opt).replace('size: ', '', 1)  # Trying to retrieve the album size
                     cover = cover_art(details_tree)[0].get('href')  # Trying to retrieve the album cover art url
                     album = Album(artist, album, year, url, size, cover)  # Creating an Album class instance
                     play_time = tracks_play_time(details_tree)  # Collecting tracks duration
@@ -119,12 +108,17 @@ def main(argv):
     #   print(colored('Filtered out %d small albums' % (len_before - len_after), 'green'))
 
 
-def get_size(url, audio_format='flac'):
+def get_size(url, opt):
     """
     Retrieves the information about the download size. Back then, when the tool was used in conjunction with What.cd,
     this data was very useful (larger uploads yield better ratio), but at the moment it's almost useless IMO.
     Anyways, I decided to leave it, because this flow is kinda cool
     """
+    
+    if not opt.scrap_download_size:
+        return 'size: unknown'
+
+    audio_format = opt.download_type
     try:
         driver = navigate_to_download_screen(url, initiate_download=False)
         dom = lxml.html.fromstring(driver.page_source)  # build the DOM tree
@@ -141,11 +135,6 @@ def get_size(url, audio_format='flac'):
         # Some albums allow you to navigate to download page only after you provide an email address
         # Size of such albums cannot be retrieved
         return 'size: unknown'
-
-
-def usage():
-    print('freeband.py -b <bandcamp tag>')
-    sys.exit(2)
 
 
 def search_list_of_dicts(leezt, attr, value):
