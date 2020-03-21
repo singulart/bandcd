@@ -20,7 +20,7 @@ has_next = CSSSelector('a.next')  # Next navigation page
 
 
 def main(argv):
-    print(colored('Bandcamp automation tools v1.1.0 (c) singulart@protonmail.com', 'yellow'))
+    print(colored('Bandcamp automation tools v2.0.0 (c) singulart@protonmail.com', 'yellow'))
 
     parser = get_arguments()
     opt = parser.parse_args()
@@ -29,10 +29,7 @@ def main(argv):
 
     cursor = ''   # Cursor-based pagination
     proceed = True
-    free_stuff = []
-    num_free = 0
-
-    # print(colored('Looking for free albums on BandCamp using tag %s...' % bandcamptag, 'green'))
+    num_free = 0  # Counter of free releases
 
     while proceed:
 
@@ -45,17 +42,21 @@ def main(argv):
             cursor = album_page.cursor
 
         # For every album go to its page and
-        # 1) check if this album actually free
-        # 2) if it's free, calculate its total duration, size, release year etc
+        # 1) check if this release can be downloaded for free
+        # 2) fetch additional metadata: total duration, size, release year etc
         for album in album_page.page:
             try:
                 details = requests.get(album.tralbum_url)
                 details_tree = lxml.html.fromstring(details.text)
-                buyMe = name_your_price(details_tree)[0].text
-                if 'name your price' in buyMe:  # TODO add 'else' to update is_free to 'false' as well
+                buy_me = name_your_price(details_tree)[0].text
+                if 'name your price' in buy_me:
                     print(colored("Album %s -> %s is FREE!" % (album.title, album.tralbum_url), 'green'))
                     album.is_free = True
                     num_free += 1
+                else:
+                    album.is_free = False
+
+                if album.year == 1970:
                     year_element = get_year(details_tree)
                     year = 1970
                     try:
@@ -66,22 +67,25 @@ def main(argv):
                             print(colored('       no release year found', 'yellow'))
                     except KeyError:
                         print(colored('       error getting release year', 'red'))
-                    size = get_size(album.tralbum_url, opt).replace('size: ', '', 1)  # see docstring
-                    cover = cover_art(details_tree)[0].get('href')  # Trying to retrieve the album cover art url
-                    album.size = size
-                    album.cover_art = cover
                     album.year = year
+
+                if album.size == '0MB' or album.size == 'unknown':
+                    size = get_size(album.tralbum_url, opt).replace('size: ', '', 1)  # see docstring
+                    album.size = size
+
+                if album.cover_art == '':
+                    cover = cover_art(details_tree)[0].get('href')  # Trying to retrieve the album cover art url
+                    album.cover_art = cover
+
+                if album.duration == '':
                     play_time = tracks_play_time(details_tree)  # Collecting tracks duration
                     for t in play_time:
                         album.add_track(t.text)
-                    free_stuff.append(album)
-                    if len(free_stuff) == 50:
-                        storage.save_all(free_stuff)
-                        free_stuff = []
+
+                storage.save_all(album_page.page)
+
             except IndexError:
                 print(colored('Problem processing album %s' % album.title, 'red'))
-        if len(free_stuff) > 0:
-            storage.save_all(free_stuff)
 
         print(colored('Discovered %d albums so far' % num_free, 'green'))
     else:

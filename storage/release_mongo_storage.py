@@ -31,10 +31,26 @@ class MongoReleaseStorage(IReleaseStore):
         self.mongo.releases_initial.find_one({'title': title})
 
     def load_all(self, cursor, limit):
+
+        """Returns a page of albums with no filters"""
+
         if cursor == '':
             cursor = self.STARTING_CURSOR
         releases_initial = self.mongo.releases_initial
         return self.cursor_to_page(releases_initial.find({'_id': {"$gt": ObjectId(cursor)}}).limit(limit))
+
+    def load_downloadable(self, cursor, limit):
+
+        """Returns a page of downloadable albums"""
+
+        if cursor == '':
+            cursor = self.STARTING_CURSOR
+        releases_initial = self.mongo.releases_initial
+        return self.cursor_to_page(releases_initial.find(
+            {
+                'is_free': True,
+                '_id': {"$gt": ObjectId(cursor)}
+            }).limit(limit))
 
     def cursor_to_page(self, cursor):
         dicts = [fr for fr in cursor]  # this extra step allows to get '_id' to be used as cursor

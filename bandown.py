@@ -1,6 +1,3 @@
-import json
-import os
-import tempfile
 import time
 
 import wget
@@ -9,24 +6,20 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from storage.release_mongo_storage import MongoReleaseStorage
 
 driver = webdriver.Firefox()
 
 
 def fetch_releases():
     print('Bandcamp album downloader')
-    album_data_files = os.listdir(tempfile.gettempdir() + '/freeband.py')
-    jsons = [tempfile.gettempdir() + '/freeband.py/' + f for f in album_data_files if f.endswith('.json')]
 
-    for json_file in jsons:
-        with open(json_file, 'r') as infile:
-            json_data = infile.read()
-            album = json.loads(json_data)
-            
-            url = album['url']
-            
-            print('\nGetting album %s' % url)
-            navigate_to_download_screen(url)
+    storage = MongoReleaseStorage()
+
+    album_page = storage.load_downloadable('', 10)  # Load a single batch of releases from a persistence storage
+    for album in album_page.page:
+        print('\nGetting album %s' % album.tralbum_url)
+        navigate_to_download_screen(album.tralbum_url)
     
     driver.quit()
     print('Done')

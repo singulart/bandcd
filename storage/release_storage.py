@@ -12,9 +12,11 @@ class IReleaseStore(metaclass=abc.ABCMeta):
                 hasattr(subclass, 'load') and
                 callable(subclass.load) and
                 hasattr(subclass, 'save_all') and
-                callable(subclass.saveAll) and
+                callable(subclass.save_all) and
                 hasattr(subclass, 'load_all') and
-                callable(subclass.loadAll)
+                callable(subclass.load_all) and
+                hasattr(subclass, 'load_downloadable') and
+                callable(subclass.load_downloadable)
         )
 
 
