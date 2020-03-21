@@ -14,9 +14,11 @@ from storage.release_mongo_storage import MongoReleaseStorage
 pagedata = CSSSelector('#pagedata')  # Json Page Model
 name_your_price = CSSSelector('span.buyItemExtra')  # "name your price" text. This is an indicator of a free album
 tracks_play_time = CSSSelector('div.title > span.time')  # Duration of all tracks
-cover_art = CSSSelector('a.popupImage')  # Url of the release cover art
+cover_art = CSSSelector('a.popupImage')  # Urls of the release cover art
 get_year = CSSSelector('meta[itemprop = "datePublished"]')  # Release year
-has_next = CSSSelector('a.next')  # Next navigation page
+tracks_title = CSSSelector('.track-title')  # Track titles
+album_about = CSSSelector('div.tralbum-about')  # Album description
+album_tags = CSSSelector('a.tag')  # Album tags
 
 
 def main(argv):
@@ -43,11 +45,17 @@ def main(argv):
 
         # For every album go to its page and
         # 1) check if this release can be downloaded for free
-        # 2) fetch additional metadata: total duration, size, release year etc
+        # 2) fetch additional metadata: total duration, size, release year, tags, about etc
         for album in album_page.page:
             try:
                 details = requests.get(album.tralbum_url)
                 details_tree = lxml.html.fromstring(details.text)
+
+                try:
+                    album.about = album_about(details_tree)[0].text
+                except IndexError:
+                    pass
+
                 buy_me = name_your_price(details_tree)[0].text
                 if 'name your price' in buy_me:
                     print(colored("Album %s -> %s is FREE!" % (album.title, album.tralbum_url), 'green'))
@@ -56,37 +64,43 @@ def main(argv):
                 else:
                     album.is_free = False
 
-                if album.year == 1970:
-                    year_element = get_year(details_tree)
-                    year = 1970
-                    try:
-                        if year_element is not None:
-                            year_s = year_element[0].attrib['content']
-                            year = time.strptime(year_s, '%Y%m%d').tm_year
-                        else:
-                            print(colored('       no release year found', 'yellow'))
-                    except KeyError:
-                        print(colored('       error getting release year', 'red'))
-                    album.year = year
+                year_element = get_year(details_tree)
+                year = 1970
+                try:
+                    if year_element is not None:
+                        year_s = year_element[0].attrib['content']
+                        year = time.strptime(year_s, '%Y%m%d').tm_year
+                    else:
+                        print(colored('       no release year found', 'yellow'))
+                except KeyError:
+                    print(colored('       error getting release year', 'red'))
+                album.year = year
 
                 if album.size == '0MB' or album.size == 'unknown':
                     size = get_size(album.tralbum_url, opt).replace('size: ', '', 1)  # see docstring
                     album.size = size
 
-                if album.cover_art == '':
-                    cover = cover_art(details_tree)[0].get('href')  # Trying to retrieve the album cover art url
-                    album.cover_art = cover
+                cover = cover_art(details_tree)[0].get('href')  # Trying to retrieve the album cover art url
+                album.cover_art = cover
 
-                if album.duration == '':
+                if not album.tracklist:
                     play_time = tracks_play_time(details_tree)  # Collecting tracks duration
-                    for t in play_time:
-                        album.add_track(t.text)
+                    track_titles = tracks_title(details_tree)  # Collecting tracks titles
+                    for (title, play) in zip(track_titles, play_time):
+                        album.add_track(title.text, play.text)
 
-                storage.save_all(album_page.page)
+                if not album.tags:
+                    album.tags = [a.text for a in album_tags(details_tree)]
 
             except IndexError:
                 print(colored('Problem processing album %s' % album.title, 'red'))
 
+        storage.save_all(album_page.page)
+
+        all_tags = []
+        for a in album_page.page:
+            all_tags += a.tags
+        storage.save_tags(set(all_tags))
         print(colored('Discovered %d albums so far' % num_free, 'green'))
     else:
         print(colored('Found %d free albums' % num_free, 'green'))

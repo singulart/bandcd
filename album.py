@@ -37,16 +37,22 @@ class Album:
         self.size = size
         self.year = year
         self.duration = ''
+        self.tracklist = []
+        self.tags = []
+        self.about = ''
         
         self.is_free = False
 
-    def add_track(self, track):
+    def add_track(self, track_title, track_duration):
         """
         Adds a track to an album, recalculating the duration time
-        :param track: track is a string in a form hours:mins:secs (1:09:23 or 4:59)
+        :param track_title: Track title
+        :param track_duration: track is a string in a form hours:mins:secs (1:09:23 or 4:59)
         """
+        self.tracklist.append(track_title)
+
         time = self.duration.split(':') if ':' in self.duration else []
-        new_track = track.split(':')
+        new_track = track_duration.split(':')
         if len(time) > len(new_track):
             for x in range(0, (len(time) - len(new_track))):
                 new_track.insert(0, '00')

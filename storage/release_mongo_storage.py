@@ -19,7 +19,9 @@ class MongoReleaseStorage(IReleaseStore):
         self.mongo.releases_initial.insert_one(self.album_to_dict(album))
 
     def save_all(self, albums):
-        """Upserts a number of albums"""
+        """
+        Upserts a number of albums
+        """
 
         serialized = [self.album_to_dict(a) for a in albums]
         updates = [
@@ -27,12 +29,24 @@ class MongoReleaseStorage(IReleaseStore):
         ]
         self.mongo.releases_initial.bulk_write(updates)
 
+    def save_tags(self, tags):
+        """
+        Upserts a number of tags
+        """
+
+        tags_mongo = [{'tag': t} for t in tags]
+        updates = [
+            UpdateOne({'tag': t['tag']}, {'$set': t}, upsert=True) for t in tags_mongo
+        ]
+        self.mongo.release_tags.bulk_write(updates)
+
     def load(self, title):
         self.mongo.releases_initial.find_one({'title': title})
 
     def load_all(self, cursor, limit):
-
-        """Returns a page of albums with no filters"""
+        """
+        Returns a page of albums with no filters
+        """
 
         if cursor == '':
             cursor = self.STARTING_CURSOR
@@ -40,8 +54,9 @@ class MongoReleaseStorage(IReleaseStore):
         return self.cursor_to_page(releases_initial.find({'_id': {"$gt": ObjectId(cursor)}}).limit(limit))
 
     def load_downloadable(self, cursor, limit):
-
-        """Returns a page of downloadable albums"""
+        """
+        Returns a page of downloadable albums
+        """
 
         if cursor == '':
             cursor = self.STARTING_CURSOR
@@ -64,5 +79,8 @@ class MongoReleaseStorage(IReleaseStore):
     @staticmethod
     def dict_to_album(mongo_dict={}):
         a = Album('', '', '')
-        a.__dict__ = mongo_dict
+        # The next line is a bit tricky :)
+        # The class may have gotten new fields absent in Mongo. TODO what about removals of fields?
+        # Hence, its __dict__ has more keys than Mongo data structure. The next line merges the two nicely
+        a.__dict__ = {**a.__dict__, **mongo_dict}
         return a

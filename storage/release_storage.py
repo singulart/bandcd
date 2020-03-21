@@ -2,7 +2,9 @@ import abc
 
 
 class IReleaseStore(metaclass=abc.ABCMeta):
-    """Interface to the underlying Bandcamp releases store"""
+    """
+    Interface to the underlying Bandcamp releases store
+    """
 
     @classmethod
     def __subclasshook__(cls, subclass):
@@ -13,6 +15,8 @@ class IReleaseStore(metaclass=abc.ABCMeta):
                 callable(subclass.load) and
                 hasattr(subclass, 'save_all') and
                 callable(subclass.save_all) and
+                hasattr(subclass, 'save_tags') and
+                callable(subclass.save_tags) and
                 hasattr(subclass, 'load_all') and
                 callable(subclass.load_all) and
                 hasattr(subclass, 'load_downloadable') and
