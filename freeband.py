@@ -52,7 +52,7 @@ def main(argv):
                 details = requests.get(album.tralbum_url)
                 details_tree = lxml.html.fromstring(details.text)
                 buyMe = name_your_price(details_tree)[0].text
-                if 'name your price' in buyMe:
+                if 'name your price' in buyMe:  # TODO add 'else' to update is_free to 'false' as well
                     print(colored("Album %s -> %s is FREE!" % (album.title, album.tralbum_url), 'green'))
                     album.is_free = True
                     num_free += 1
