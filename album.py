@@ -1,19 +1,44 @@
 from bitmath import GiB
 from bitmath import MiB
-import json
-import tempfile
-import os
 
 
 class Album:
-    def __init__(self, artist, album, year, url, size, cover_art):
+    def __init__(self,
+                 artist,
+                 album,
+                 url,
+                 band_url='',
+                 slug_text='',
+                 num_comments=0,
+                 tralbum_id=0,
+                 art_id=0,
+                 genre='',
+                 band_id=0,
+                 genre_id=0,
+                 year=1970,
+                 size='0MB',
+                 cover_art=''
+                 ):
+        # Bandcamp Hub API fields
         self.artist = artist
-        self.album = album
-        self.year = year
-        self.url = url
+        self.title = album
+        self.tralbum_url = url
+        self.band_url = band_url
+        self.slug_text = slug_text
+        self.num_comments = num_comments
+        self.tralbum_id = tralbum_id
+        self.art_id = art_id  # cover art?
+        self.genre = genre
+        self.genre_id = genre_id
+        self.band_id = band_id
+        
+        # Custom properties
         self.cover_art = cover_art
         self.size = size
+        self.year = year
         self.duration = ''
+        
+        self.is_free = False
 
     def add_track(self, track):
         """
@@ -64,13 +89,3 @@ class Album:
         :return True if the size of the album is more than 300MB, false otherwise
         """
         return MiB(300).bytes < self.size_bytes()
-
-    def to_str(self):
-        return ', '.join([self.album, self.artist, str(self.year), self.duration, self.size, self.url])
-
-    def dump_json(self):
-        target_dir = tempfile.gettempdir() + '/freeband.py'
-        if not os.path.exists(target_dir):
-            os.mkdir(target_dir)
-        with open(target_dir + '/' + self.artist + ' ' + self.album + '.json', 'w') as outfile:
-            json.dump(self.__dict__, outfile, indent=4, separators=(',', ': '))

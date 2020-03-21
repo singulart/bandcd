@@ -1,31 +1,25 @@
-import json
-import os
-import tempfile
 import time
 
 import wget
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from storage.release_mongo_storage import MongoReleaseStorage
 
 driver = webdriver.Firefox()
 
 
 def fetch_releases():
     print('Bandcamp album downloader')
-    album_data_files = os.listdir(tempfile.gettempdir() + '/freeband.py')
-    jsons = [tempfile.gettempdir() + '/freeband.py/' + f for f in album_data_files if f.endswith('.json')]
 
-    for json_file in jsons:
-        with open(json_file, 'r') as infile:
-            json_data = infile.read()
-            album = json.loads(json_data)
-            
-            url = album['url']
-            
-            print('\nGetting album %s' % url)
-            navigate_to_download_screen(url)
+    storage = MongoReleaseStorage()
+
+    album_page = storage.load_downloadable('', 10)  # Load a single batch of releases from a persistence storage
+    for album in album_page.page:
+        print('\nGetting album %s' % album.tralbum_url)
+        navigate_to_download_screen(album.tralbum_url)
     
     driver.quit()
     print('Done')
@@ -62,6 +56,11 @@ def navigate_to_download_screen(album_url, initiate_download=True):
     except:
         print('Album %s cannot be downloaded: email-based links are not supported' % album_url)
     return driver
+
+
+def switch_to_tab():
+    driver.find_element_by_css_selector(By.CSS_SELECTOR("body")).sendKeys(Keys.CONTROL + "\t")
+    driver.switch_to.default_content()
 
 
 if __name__ == "__main__":

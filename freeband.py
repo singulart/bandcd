@@ -7,9 +7,9 @@ import requests
 from lxml.cssselect import CSSSelector
 from termcolor import colored
 
-from album import Album
 from bandown import navigate_to_download_screen
 from config import get_arguments
+from storage.release_mongo_storage import MongoReleaseStorage
 
 pagedata = CSSSelector('#pagedata')  # Json Page Model
 name_your_price = CSSSelector('span.buyItemExtra')  # "name your price" text. This is an indicator of a free album
@@ -20,48 +20,43 @@ has_next = CSSSelector('a.next')  # Next navigation page
 
 
 def main(argv):
-    print(colored('Bandcamp automation tools v1.1.0 (c) singulart@protonmail.com', 'yellow'))
+    print(colored('Bandcamp automation tools v2.0.0 (c) singulart@protonmail.com', 'yellow'))
 
     parser = get_arguments()
     opt = parser.parse_args()
-    bandcamptag = opt.tag
+    
+    storage = MongoReleaseStorage()
 
-    page = 1
+    cursor = ''   # Cursor-based pagination
     proceed = True
-    free_stuff = []
-
-    print(colored('Looking for free albums on BandCamp using tag %s...' % bandcamptag, 'green'))
+    num_free = 0  # Counter of free releases
 
     while proceed:
-        r = requests.get('https://bandcamp.com/tag/%s?tab=all_releases&s=date' % bandcamptag)
 
-        tree = lxml.html.fromstring(r.text)  # build the DOM tree
-        page_data_div = pagedata(tree)  # apply CSS selector to find div with json page model (data-blob)
-        data_blob = {}  # this is the json page model
-        if not page_data_div or len(page_data_div) == 0:
-            print('Json page model not found. Check the html structure and fix the CSS selector')
-            exit(1)
+        album_page = storage.load_all(cursor, 32)  # Load from persistent storage in batches
+
+        if len(album_page.page) == 0:
+            proceed = False
+            continue
         else:
-            data_blob = json.loads(page_data_div[0].xpath('@data-blob')[0])
-        
-        new_releases_tab = search_list_of_dicts(data_blob['hub']['tabs'][0]['collections'],
-                                                'name', 'new_releases')[0]['items']
-
-        # get the text out of all the results
-        tuples = [(nr['title'], nr['tralbum_url'], nr['artist']) for nr in new_releases_tab]
-
-        really_free_page_data = []
+            cursor = album_page.cursor
 
         # For every album go to its page and
-        # 1) check if this album actually free
-        # 2) if it's free, calculate its total duration, size, release year etc
-        for (album, url, artist) in tuples:
+        # 1) check if this release can be downloaded for free
+        # 2) fetch additional metadata: total duration, size, release year etc
+        for album in album_page.page:
             try:
-                details = requests.get(url)
+                details = requests.get(album.tralbum_url)
                 details_tree = lxml.html.fromstring(details.text)
-                buyMe = name_your_price(details_tree)[0].text
-                if 'name your price' in buyMe:
-                    print(colored("Album %s -> %s is FREE!" % (album, url), 'green'))
+                buy_me = name_your_price(details_tree)[0].text
+                if 'name your price' in buy_me:
+                    print(colored("Album %s -> %s is FREE!" % (album.title, album.tralbum_url), 'green'))
+                    album.is_free = True
+                    num_free += 1
+                else:
+                    album.is_free = False
+
+                if album.year == 1970:
                     year_element = get_year(details_tree)
                     year = 1970
                     try:
@@ -72,39 +67,29 @@ def main(argv):
                             print(colored('       no release year found', 'yellow'))
                     except KeyError:
                         print(colored('       error getting release year', 'red'))
-                    size = get_size(url, opt).replace('size: ', '', 1)  # Trying to retrieve the album size
+                    album.year = year
+
+                if album.size == '0MB' or album.size == 'unknown':
+                    size = get_size(album.tralbum_url, opt).replace('size: ', '', 1)  # see docstring
+                    album.size = size
+
+                if album.cover_art == '':
                     cover = cover_art(details_tree)[0].get('href')  # Trying to retrieve the album cover art url
-                    album = Album(artist, album, year, url, size, cover)  # Creating an Album class instance
+                    album.cover_art = cover
+
+                if album.duration == '':
                     play_time = tracks_play_time(details_tree)  # Collecting tracks duration
                     for t in play_time:
                         album.add_track(t.text)
-                    really_free_page_data.append(album)
-                    album.dump_json()
+
+                storage.save_all(album_page.page)
+
             except IndexError:
-                print(colored('Problem processing album %s' % album, 'red'))
+                print(colored('Problem processing album %s' % album.title, 'red'))
 
-        free_stuff.extend(really_free_page_data)
-
-        nextel = has_next(tree)
-        if nextel:
-            print(colored('Discovered %d albums so far' % (len(free_stuff)), 'green'))
-            page += 1
-        else:
-            proceed = False
+        print(colored('Discovered %d albums so far' % num_free, 'green'))
     else:
-        print(colored('Found %d free albums' % len(free_stuff), 'green'))
-
-    # Apply sorting by album size, largest albums first
-    free_stuff = sorted(free_stuff, key=lambda x: x.size_bytes(), reverse=True)
-
-    # Filter out small albums
-    # free_stuff = list(filter(lambda alb: alb.big(), free_stuff))
-    # len_after = len(free_stuff)
-
-    # if len_after == 0:
-    #   exit(0)
-    # else:
-    #   print(colored('Filtered out %d small albums' % (len_before - len_after), 'green'))
+        print(colored('Found %d free albums' % num_free, 'green'))
 
 
 def get_size(url, opt):
@@ -134,16 +119,6 @@ def get_size(url, opt):
         # Some albums allow you to navigate to download page only after you provide an email address
         # Size of such albums cannot be retrieved
         return 'size: unknown'
-
-
-def search_list_of_dicts(leezt, attr, value):
-    """
-    Loops through a list of dictionaries and returns matching attribute value pair
-    You can also pass it slug, silvermoon or type, pve
-    returns a list containing all matching dictionaries
-    """
-    matches = [record for record in leezt if attr in record and record[attr] == value]
-    return matches
 
 
 if __name__ == "__main__":

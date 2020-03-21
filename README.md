@@ -3,11 +3,14 @@ Bandcamp.com automation tools written in Python and Selenium
 
 Main features:
 
-1. freeband.py - Detects 'Name your Price' (free) Bandcamp albums
-2. bandown.py - Downloads free albums. Requires Selenium driver
+1. release_meta.py - Scraps and persists releases meta-information  
+2. freeband.py - Detects 'Name your Price' (free) Bandcamp albums
+3. bandown.py - Downloads free albums. Requires Selenium driver
 
 ### Usage
->		python freeband.py --tag jazz
+>       python release_meta.py --tag jazz
+>       python freeband.py
+>       python bandown.py
 
 ### Other files/scripts
 
