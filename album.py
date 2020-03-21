@@ -40,6 +40,8 @@ class Album:
         self.size = size
         self.year = year
         self.duration = ''
+        
+        self.is_free = False
 
     def add_track(self, track):
         """

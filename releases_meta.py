@@ -47,7 +47,7 @@ def main(sysv):
                 storage.save_all(to_save_bulk)
                 
         except JSONDecodeError as e:
-            print(e.msg)
+            print(e)
         
 
 class DigDeeperFilter:

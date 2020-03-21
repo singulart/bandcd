@@ -16,3 +16,9 @@ class IReleaseStore(metaclass=abc.ABCMeta):
                 hasattr(subclass, 'load_all') and
                 callable(subclass.loadAll)
         )
+
+
+class PagedData:
+    def __init__(self, page, cursor):
+        self.page = page
+        self.cursor = cursor
