@@ -1,8 +1,5 @@
 from bitmath import GiB
 from bitmath import MiB
-import json
-import tempfile
-import os
 
 
 class Album:
@@ -92,13 +89,3 @@ class Album:
         :return True if the size of the album is more than 300MB, false otherwise
         """
         return MiB(300).bytes < self.size_bytes()
-
-    def to_str(self):
-        return ', '.join([self.album, self.artist, str(self.year), self.duration, self.size, self.url])
-
-    def dump_json(self):
-        target_dir = tempfile.gettempdir() + '/freeband.py'
-        if not os.path.exists(target_dir):
-            os.mkdir(target_dir)
-        with open(target_dir + '/' + self.artist + ' ' + self.album + '.json', 'w') as outfile:
-            json.dump(self.__dict__, outfile, indent=4, separators=(',', ': '))
