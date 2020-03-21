@@ -8,7 +8,9 @@ Main features:
 3. bandown.py - Downloads free albums. Requires Selenium driver
 
 ### Usage
->		python freeband.py --tag jazz
+>       python release_meta.py --tag jazz
+>       python freeband.py
+>       python bandown.py
 
 ### Other files/scripts
 
