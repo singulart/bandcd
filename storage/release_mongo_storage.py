@@ -68,6 +68,8 @@ class MongoReleaseStorage(IReleaseStore):
             }).limit(limit))
 
     def cursor_to_page(self, cursor):
+        if len(cursor) == 0:
+            return PagedData([], '')
         dicts = [fr for fr in cursor]  # this extra step allows to get '_id' to be used as cursor
         albums = [self.dict_to_album(fr) for fr in dicts]  # convert Mongo objects to Albums
         return PagedData(albums, str(dicts[len(dicts) - 1]['_id']))  # create Page object
