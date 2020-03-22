@@ -22,7 +22,7 @@ album_tags = CSSSelector('a.tag')  # Album tags
 
 
 def main(argv):
-    print(colored('Bandcamp automation tools v2.1.0 (c) singulart@protonmail.com', 'yellow'))
+    print(colored('Bandcamp automation tools v2.2.0 (c) singulart@protonmail.com', 'yellow'))
 
     parser = get_arguments()
     opt = parser.parse_args()
