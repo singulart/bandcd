@@ -5,8 +5,8 @@ import jsonpickle
 from json.decoder import JSONDecodeError
 from album import Album
 from config import get_arguments
-from storage.release_storage import IReleaseStore
 from storage.release_mongo_storage import MongoReleaseStorage
+
 
 def main(sysv):
     parser = get_arguments()
