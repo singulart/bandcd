@@ -40,6 +40,12 @@ class MongoReleaseStorage(IReleaseStore):
         ]
         self.mongo.release_tags.bulk_write(updates)
 
+    def load_tags(self):
+        """
+        Loads a list of tags
+        """
+        return [t['tag'].replace(' ', '-') for t in self.mongo.release_tags.find({})]
+
     def load(self, title):
         self.mongo.releases_initial.find_one({'title': title})
 

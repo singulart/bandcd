@@ -10,10 +10,24 @@ from storage.release_mongo_storage import MongoReleaseStorage
 
 def main(sysv):
     parser = get_arguments()
+    parser.add_argument('--use_saved_tags', help='Ignores --tag option in favor of previously discovered tags'
+                        , type=bool, default=False)
     opt = parser.parse_args()
+
+    storage = MongoReleaseStorage()
+
+    if not opt.use_saved_tags:
+        process_single_tag(storage, opt)
+    else:
+        tags = storage.load_tags()
+        for t in tags:
+            opt.tag = t
+            process_single_tag(storage, opt)
+
+
+def process_single_tag(storage, opt):
     proceed = True
     page = 1
-    storage = MongoReleaseStorage()
     while proceed:
         print('Processing page %s for %s' % (page, opt.tag))
         body = jsonpickle.encode(DigDeeperPostBody(DigDeeperFilter(opt.tag), page))
