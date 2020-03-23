@@ -25,7 +25,15 @@ class MongoReleaseStorage(IReleaseStore):
 
         serialized = [self.album_to_dict(a) for a in albums]
         updates = [
-            UpdateOne({'tralbum_id': d['tralbum_id']}, {'$set': d}, upsert=True) for d in serialized
+            UpdateOne(
+                {
+                    'tralbum_id': d['tralbum_id'],
+                    'ver': d['ver']
+                },
+                {
+                    '$set': d,
+                    "$inc": {"ver": 1}
+                }, upsert=True) for d in serialized
         ]
         self.mongo.releases_initial.bulk_write(updates)
 

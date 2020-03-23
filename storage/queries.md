@@ -51,3 +51,11 @@ db.releases_initial.aggregate([
     { $sort : { count : -1} }
 ]);
 ```
+
+###### H6 Schema update: add version
+
+```
+db.releases_initial.update(
+    {"ver":{$exists:false}}, {"$set": {"ver": 1}}, false, true
+)
+```
