@@ -19,6 +19,10 @@ class Album:
                  size='0MB',
                  cover_art=''
                  ):
+
+        # Version field for enabling smarter updates
+        self.ver = 1
+
         # Bandcamp Hub API fields
         self.artist = artist
         self.title = album
