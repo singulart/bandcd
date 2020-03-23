@@ -35,7 +35,7 @@ def main(argv):
 
     while proceed:
 
-        album_page = storage.load_all(cursor, 32)  # Load from persistent storage in batches
+        album_page = storage.load_all(cursor, 50)  # Load from persistent storage in batches
 
         if len(album_page.page) == 0:
             proceed = False
