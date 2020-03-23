@@ -1,6 +1,22 @@
 ## Useful queries
 
 
+###### H6 Number of releases by tags (Top 100) 
+
+```
+db.releases_initial.aggregate([
+  {
+    $facet: {
+      "categorizedByTags": [
+        { $unwind: "$tags" },
+        { $sortByCount: "$tags" }, 
+        { $limit: 100}
+      ]
+    }
+  }
+]); 
+```
+
 ###### H6 Fetches duplicate release documents (if any)
 
 ```
