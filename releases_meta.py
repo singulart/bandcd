@@ -19,7 +19,7 @@ def main(sysv):
     if not opt.use_saved_tags:
         process_single_tag(storage, opt)
     else:
-        tags = storage.load_tags()
+        tags = storage.load_tags(50)  # Get 50 random tags to process
         for t in tags:
             opt.tag = t
             process_single_tag(storage, opt)

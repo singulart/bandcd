@@ -48,11 +48,14 @@ class MongoReleaseStorage(IReleaseStore):
         ]
         self.mongo.release_tags.bulk_write(updates)
 
-    def load_tags(self):
+    def load_tags(self, limit=100):
         """
-        Loads a list of tags
+        :returns Capped list of random tags
         """
-        return [t['tag'].replace(' ', '-') for t in self.mongo.release_tags.find({})]
+        return [
+                t['tag'].replace(' ', '-')
+                for t in self.mongo.release_tags.aggregate([{'$sample': {'size': limit}}])
+        ]
 
     def load(self, title):
         self.mongo.releases_initial.find_one({'title': title})
