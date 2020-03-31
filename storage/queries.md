@@ -22,15 +22,17 @@ db.releases_initial.aggregate([
 ```
 db.releases_initial.aggregate([
     {$group: {
-        _id: "$genre",
+        _id: "tralbum_id",
         count: {$sum: 1}
         }
     },
     {$match: { 
-        count: {"$gt": 10000}
+        count: {"$gt": 1}
         }
     },
-    { $sort : { count : -1} }
+    {$project:{"name":1,"_id":0}},
+    {$group:{"_id":null,"duplicateIds":{$push:"$name"}}},
+    {$project:{"_id":0,"duplicateIds":1}}
 ]);
 ```
 

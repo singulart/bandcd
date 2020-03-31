@@ -29,19 +29,17 @@ def main(argv):
     
     storage = MongoReleaseStorage()
 
-    cursor = ''   # Cursor-based pagination
     proceed = True
     num_free = 0  # Counter of free releases
 
     while proceed:
 
-        album_page = storage.load_all(cursor, 50)  # Load from persistent storage in batches
+        album_page = storage\
+            .load_albums_by_criteria({'is_free': False}, limit=1)  # Load from persistent storage in batches
 
         if len(album_page.page) == 0:
             proceed = False
             continue
-        else:
-            cursor = album_page.cursor
 
         # For every album go to its page and
         # 1) check if this release can be downloaded for free
@@ -95,7 +93,7 @@ def main(argv):
             except IndexError:
                 print(colored('Problem processing album %s' % album.title, 'red'))
 
-        storage.save_all(album_page.page)
+        storage.add_features(album_page.page, ['tags', 'size', 'year', 'about', 'is_free', 'tracklist', 'cover_art'])
 
         all_tags = []
         for a in album_page.page:

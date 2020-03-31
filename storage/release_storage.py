@@ -21,6 +21,8 @@ class IReleaseStore(metaclass=abc.ABCMeta):
                 callable(subclass.save_tags) and
                 hasattr(subclass, 'load_all') and
                 callable(subclass.load_all) and
+                hasattr(subclass, 'load_albums_by_criteria') and
+                callable(subclass.load_albums_by_criteria) and
                 hasattr(subclass, 'load_downloadable') and
                 callable(subclass.load_downloadable)
         )
