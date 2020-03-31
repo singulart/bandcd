@@ -13,4 +13,5 @@ COPY --from=builder /install /usr/local
 COPY storage /app/storage
 COPY *.py /app/
 WORKDIR /app
-ENTRYPOINT ["python3", "releases_meta.py"]
+# Note '-u' option: unbuffered output https://stackoverflow.com/a/29745541
+ENTRYPOINT ["python3", "-u", "releases_meta.py"]

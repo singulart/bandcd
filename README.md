@@ -18,6 +18,7 @@ Main features:
 >       docker run --env MONGO_URL="<MONGO_URL>" band1:latest --use_saved_tags True
 
 ### Running in a Kubernetes cluster against a [remote] Mongo DB
+>       eval $(minikube docker-env)
 >       kubectl apply -f deployment.yaml
 >       kubectl set env --all MONGO_URL="<MONGO_URL>"
 
