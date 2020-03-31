@@ -14,8 +14,10 @@ Main features:
 >       python bandown.py
 
 ### Running in Docker container against a [remote] Mongo DB
->       docker build -t band1 -f Dockerfile .
->       docker run --env MONGO_URL="<MONGO_URL>" band1:latest --use_saved_tags True
+>       docker build -t finder -f docker/release_mining/Dockerfile .
+>       docker build -t enricher -f docker/enrichment_tracklist/Dockerfile .
+>       docker run --env MONGO_URL="<MONGO_URL>" finder:latest --use_saved_tags True
+>       docker run --env MONGO_URL="<MONGO_URL>" enricher:latest --use_saved_tags True
 
 ### Running in a Kubernetes cluster against a [remote] Mongo DB
 >       eval $(minikube docker-env)
