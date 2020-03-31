@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bandcd-deployment
+spec:
+  selector:
+    matchLabels:
+      app: bandcd
+  template:
+    metadata:
+      labels:
+        app: bandcd
+    spec:
+      containers:
+      - name: bandcd
+        image: band1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MONGO_URL
+          value: "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        args: ["--use_saved_tags", "True"]
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
