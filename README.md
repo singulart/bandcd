@@ -17,15 +17,18 @@ Main features:
 >       docker build -t finder -f docker/release_mining/Dockerfile .
 >       docker build -t enricher -f docker/enrichment_tracklist/Dockerfile .
 >       docker run --env MONGO_URL="<MONGO_URL>" finder:latest --use_saved_tags True
->       docker run --env MONGO_URL="<MONGO_URL>" enricher:latest --use_saved_tags True
+>       docker run --env MONGO_URL="<MONGO_URL>" enricher:latest
+
+Note: feature requiring selenium (--scrap-download-size) currently doesn't work in Docker. 
 
 ### Running in a Kubernetes cluster against a [remote] Mongo DB
 >       eval $(minikube docker-env)
->       kubectl apply -f deployment.yaml
+>       kubectl apply -f deployment-finder.yaml
+>       kubectl apply -f deployment-enricher.yaml
 >       kubectl set env --all MONGO_URL="<MONGO_URL>"
 
 #### Scaling in Kubernetes
->       kubectl scale --replicas=10 -f deployment.yaml
+>       kubectl scale --replicas=10 -f deployment-enricher.yaml
 
 
 ### Other files/scripts
