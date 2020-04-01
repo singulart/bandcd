@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: bandcd-deployment
+  name: bandcd-finder
 spec:
   selector:
     matchLabels:
-      app: bandcd
+      app: bandcd-finder
   template:
     metadata:
       labels:
-        app: bandcd
+        app: bandcd-finder
     spec:
       containers:
-      - name: bandcd
-        image: band1
+      - name: bandcd-finder
+        image: finder
         imagePullPolicy: IfNotPresent
         env:
         - name: MONGO_URL

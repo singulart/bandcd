@@ -8,7 +8,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from storage.release_mongo_storage import MongoReleaseStorage
 
-driver = webdriver.Firefox()
+# options = webdriver.ChromeOptions()
+# options.add_argument('--headless')
+# options.add_argument('--no-sandbox')
+# driver = webdriver.Chrome(options=options)
 
 
 def fetch_releases():
@@ -21,12 +24,13 @@ def fetch_releases():
         print('\nGetting album %s' % album.tralbum_url)
         navigate_to_download_screen(album.tralbum_url)
     
-    driver.quit()
     print('Done')
 
 
 def navigate_to_download_screen(album_url, initiate_download=True):
     try:
+        driver = webdriver.Firefox()
+
         driver.get(album_url)
         
         buy_now = driver.find_element_by_css_selector('h4 > button.download-link')
@@ -55,12 +59,8 @@ def navigate_to_download_screen(album_url, initiate_download=True):
             time.sleep(2)
     except:
         print('Album %s cannot be downloaded: email-based links are not supported' % album_url)
-    return driver
-
-
-def switch_to_tab():
-    driver.find_element_by_css_selector(By.CSS_SELECTOR("body")).sendKeys(Keys.CONTROL + "\t")
-    driver.switch_to.default_content()
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":

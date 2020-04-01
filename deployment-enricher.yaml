@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bandcd-enricher
+spec:
+  selector:
+    matchLabels:
+      app: bandcd-enricher
+  template:
+    metadata:
+      labels:
+        app: bandcd-enricher
+    spec:
+      containers:
+      - name: bandcd-enricher
+        image: enricher
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MONGO_URL
+          value: "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
