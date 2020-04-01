@@ -30,13 +30,8 @@ COPY storage /app/storage
 COPY *.py /app/
 WORKDIR /app
 
-# rename the firefox and use renamed symlink in xvfb-firefox
-#RUN mv /usr/bin/firefox /usr/bin/firefox-run
-
 # xvfb - X server display
 COPY xvfb-ffox /usr/bin/
 RUN chmod 777 /usr/bin/xvfb-ffox
-#RUN ln -s /usr/bin/xvfb-ffox /usr/bin/firefox
 
-# Note '-u' option: unbuffered output https://stackoverflow.com/a/29745541
 ENTRYPOINT ["/usr/bin/xvfb-ffox"]
