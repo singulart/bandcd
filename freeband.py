@@ -35,7 +35,7 @@ def main(argv):
     while proceed:
 
         album_page = storage\
-            .load_albums_by_criteria({'is_free': False}, limit=1)  # Load from persistent storage in batches
+            .load_albums_by_criteria({'is_free': False}, limit=100)  # Load from persistent storage in batches
 
         if len(album_page.page) == 0:
             proceed = False
