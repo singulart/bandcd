@@ -3,7 +3,7 @@ import time
 import wget
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from storage.release_mongo_storage import MongoReleaseStorage
@@ -29,7 +29,9 @@ def fetch_releases():
 
 def navigate_to_download_screen(album_url, initiate_download=True):
     try:
-        driver = webdriver.Firefox()
+        options = Options()
+        options.headless = True
+        driver = webdriver.Firefox(options=options)
 
         driver.get(album_url)
         
