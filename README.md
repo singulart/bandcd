@@ -19,7 +19,7 @@ Main features:
 >       docker run --env MONGO_URL="<MONGO_URL>" finder:latest --use_saved_tags True
 >       docker run --env MONGO_URL="<MONGO_URL>" enricher:latest
 
-Note: feature requiring selenium (--scrap-download-size) currently doesn't work in Docker. 
+Note: in docker/k8s the feature --scrap-download-size currently works unstable due to Selenium timeouts. 
 
 ### Running in a Kubernetes cluster against a [remote] Mongo DB
 >       eval $(minikube docker-env)
