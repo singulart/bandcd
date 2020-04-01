@@ -30,7 +30,7 @@ def fetch_releases():
 def navigate_to_download_screen(album_url, initiate_download=True):
     try:
         options = Options()
-        # options.headless = True
+        options.headless = True
         driver = webdriver.Firefox(options=options)
 
         driver.get(album_url)
