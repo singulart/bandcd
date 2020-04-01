@@ -116,8 +116,8 @@ def get_size(url, opt):
 
     audio_format = opt.download_type
     try:
-        driver = navigate_to_download_screen(url, initiate_download=False)
-        dom = lxml.html.fromstring(driver.page_source)  # build the DOM tree
+        page_source = navigate_to_download_screen(url, initiate_download=False)
+        dom = lxml.html.fromstring(page_source)  # build the DOM tree
         page_model = pagedata(dom)
         data_blob = json.loads(page_model[0].xpath('@data-blob')[0])
         downloads = data_blob['download_items'][0]['downloads']

@@ -30,7 +30,7 @@ def fetch_releases():
 def navigate_to_download_screen(album_url, initiate_download=True):
     try:
         options = Options()
-        options.headless = True
+        # options.headless = True
         driver = webdriver.Firefox(options=options)
 
         driver.get(album_url)
@@ -47,7 +47,7 @@ def navigate_to_download_screen(album_url, initiate_download=True):
             "a[onclick='TralbumDownload.showButtonsSection(event); return false']")
         dwnld_link.click()
     
-        time.sleep(1)
+        time.sleep(5)
         dnow = driver.find_elements_by_css_selector("button[onclick='TralbumDownload.checkout(); return false']")[1]
         dnow.click()
 
@@ -59,7 +59,10 @@ def navigate_to_download_screen(album_url, initiate_download=True):
             wget.download(go.get_attribute('href'))
         else:
             time.sleep(2)
-    except:
+        pagesource = driver.page_source
+        return pagesource
+    except Exception as e:
+        print(e.__class__)
         print('Album %s cannot be downloaded: email-based links are not supported' % album_url)
     finally:
         driver.quit()
